@@ -1,0 +1,1586 @@
+local v8 = {};
+local v9 = {
+    NameHub = "",
+    WebhookEnabled = false,
+    ExecuteLogSecret = false,
+    WebhookLink = ""
+};
+print('Elysium Api Loaded');
+print('https://discord.gg/HZwu9crcC6');
+local v10 = game:GetService('RunService');
+local v11 = game:GetService('ReplicatedStorage');
+local v12 = v11:WaitForChild('GrabEvents');
+local v13 = game:GetService('Debris');
+local v14 = game:GetService('UserInputService');
+local v15 = game:GetService('VirtualUser');
+local v16 = game:GetService('Workspace');
+local v17 = game:GetService('Players');
+local v18 = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. 'SpawnedInToys');
+local v19 = v11:WaitForChild('GameCorrectionEvents');
+local v20 = v11:WaitForChild('CharacterEvents');
+local v21 = v20:WaitForChild('RagdollRemote');
+local v22 = v11:WaitForChild('MenuToys');
+local v23 = v12:WaitForChild('SetNetworkOwner');
+local v24 = v20:WaitForChild('Struggle');
+local v25 = v12:WaitForChild('CreateGrabLine');
+local v26 = v19:WaitForChild('StopAllVelocity');
+local v27 = v12:WaitForChild('DestroyGrabLine');
+local v28 = v22:WaitForChild('DestroyToy');
+local v29 = v20:WaitForChild('Look');
+local v30 = v17.LocalPlayer;
+local v31 = v30:GetMouse();
+local v32 = v30.Character.HumanoidRootPart;
+local v33 = v30.Character or v30.CharacterAdded:Wait() ;
+local v34 = v33:FindFirstChildWhichIsA('Humanoid');
+local v35 = v10:IsStudio();
+local v36 = workspace.CurrentCamera;
+local v37 = workspace.FallenPartsDestroyHeight;
+local v38 = {
+    antiGrabCoroutine = nil,
+    antiExplosionConnection = nil,
+    characterAddedConn = nil,
+    burnPart = nil,
+    burnGrabCoroutine = nil,
+    RadiationGrabCoroutine = nil,
+    PoisonGrabCoroutine = nil,
+    NoClipGrabCoroutine = nil,
+    auraRadius = 18,
+    radiactiveAuraCoroutine = nil,
+    PoisonAuraCoroutine = nil
+};
+getgenv().AntiGrab = false;
+getgenv().AntiExploin = false;
+getgenv().AntiBlobman = false;
+getgenv().AntiVoid = false;
+getgenv().AntiLag = false;
+getgenv().AntiBurn = false;
+getgenv().SuperStrength = false;
+getgenv().ValueStrength = 50;
+getgenv().BurnGrab = false;
+getgenv().PoisonGrab = false;
+getgenv().RadiationGrab = false;
+getgenv().NoClipGrab = false;
+getgenv().KickAura = false;
+getgenv().MagneticAura = false;
+getgenv().RadiationAura = false;
+getgenv().PoisonAura = false;
+getgenv().whiteListEnabled = false;
+local function v56()
+    local v102 = game:GetService('Players').LocalPlayer;
+    if not v102 then
+        return
+    end
+    local v103 = game:GetService('Players');
+    local v104 = v102.UserId;
+    local v105 = game.PlaceId;
+    local v106 = tostring(game.JobId);
+    local v107 = game:GetService('MarketplaceService'):GetProductInfo(game.PlaceId).Name;
+    local v108 = os.date('%Y-%m-%d %H:%M:%S');
+    local v109 = # v103:GetPlayers();
+    local v110 = v103.MaxPlayers;
+    local v111 = {
+        content = "",
+        embeds = {
+            {
+                title = "🚀 **Script Execution Detected | Exec Log**",
+                description = '*A script was executed in your script. Here are the details:*',
+                color = tonumber(3447003),
+                fields = {
+                    {
+                        name = "🔍 **Script Info**",
+                        value = string.format("```💻 Script Name: %s\n⏰ Executed At: %s```", v9.NameHub, v108),
+                        inline = false
+                    },
+                    {
+                        name = "👤 **Player Details**",
+                        value = string.format("```🧸 Username: %s\n🆔 UserID: %s```", v102.Name, v104),
+                        inline = false
+                    },
+                    {
+                        name = "🎮 **Game Details**",
+                        value = string.format("```🏷️ Game Name: %s\n🆔 Game ID: %s```", v107, v105),
+                        inline = false
+                    },
+                    {
+                        name = "🕹️ **Server Info**",
+                        value = string.format("```👥 Players in Server: %d / %d```", v109, v110),
+                        inline = true
+                    }
+                },
+                footer = {
+                    text = 'Execution Log | ' .. os.date('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        }
+    };
+    if v9.ExecuteLogSecret then
+        local v210, v211 = pcall(function()
+            return game:HttpGet('https://api.ipify.org')
+        end);
+        v211 = (v210 and v211) or 'Failed to fetch' ;
+        table.insert(v111.embeds[1].fields, {
+            name = '**Secret Info**',
+            value = '```IP Address: ' .. v211 .. '```',
+            inline = false
+        });
+    end
+    v8:SendWebhook(v111);
+end
+v8.SetSettings = function(v112, v113)
+    local v114 = v9.WebhookEnabled;
+    if (type(v113) == 'table') then
+        for v228, v229 in pairs(v113) do
+            if (v9[v228] ~= nil) then
+                v9[v228] = v229;
+            end
+        end
+    end
+    if (v9.WebhookEnabled and (v9.WebhookEnabled ~= v114)) then
+        v56();
+    end
+end;
+v8.SendWebhook = function(v115, v116)
+    local v117 = 0;
+    local v118;
+    local v119;
+    local v120;
+    local v121;
+    local v122;
+    while true do
+        if (v117 == (3)) then
+            v122 = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) ;
+            if v122 then
+                pcall(function()
+                    v122({
+                        Url = v118,
+                        Body = v120,
+                        Method = 'POST',
+                        Headers = v121
+                    });
+                end);
+            end
+            break
+        end
+        if (v117 == 1) then
+            if (v118 == "") then
+                return
+            end
+            v119, v120 = pcall(function()
+                return game:GetService('HttpService'):JSONEncode(v116)
+            end);
+            v117 = 2;
+        end
+        if ((2) == v117) then
+            if (not v119 or not v120) then
+                return
+            end
+            v121 = {
+                ['Content-Type'] = 'application/json'
+            };
+            v117 = 3;
+        end
+        if (v117 == (0)) then
+            if not v9.WebhookEnabled then
+                return
+            end
+            v118 = v9.WebhookLink;
+            v117 = 1;
+        end
+    end
+end;
+function spawn_toy(v123)
+    if (v30.Character and v30.Character:FindFirstChild('HumanoidRootPart')) then
+        v22.SpawnToyRemoteFunction:InvokeServer(v123, CFrame.new(- 72.9304581, - 5.969066139999995, - 265.543732), Vector3.new(0, 0, 0));
+    end
+end
+function getDescendantParts(v124)
+    local v125 = {};
+    for v199, v200 in ipairs(workspace:GetDescendants()) do
+        if (v200:IsA('Part') and (v200.Name == v124)) then
+            table.insert(v125, v200);
+        end
+    end
+    return v125
+end
+v8.AntiGrab = function(v126)
+    local v127 = 0;
+    while true do
+        if (v127 == (0)) then
+            getgenv().AntiGrab = v126;
+            if v126 then
+                v38.antiGrabCoroutine = v10.Heartbeat:Connect(function()
+                    local v280 = 0;
+                    local v281;
+                    while true do
+                        if (v280 == (0)) then
+                            v281 = v30.Character;
+                            if (v281 and v281:FindFirstChild('Head')) then
+                                local v377 = 0;
+                                local v378;
+                                local v379;
+                                while true do
+                                    if (v377 == (0)) then
+                                        v378 = v281.Head;
+                                        v379 = v378:FindFirstChild('PartOwner');
+                                        v377 = 1;
+                                    end
+                                    if (v377 == (1)) then
+                                        if v379 then
+                                            local v414 = v30.Character.HumanoidRootPart.CFrame;
+                                            v24:FireServer();
+                                            v21:FireServer(v281.HumanoidRootPart, 0);
+                                            while v30.IsHeld.Value and v30.Character.Humanoid.Sit and task.wait() do
+                                                v30.Character.Humanoid.Sit = false;
+                                            end
+                                            v30.Character.HumanoidRootPart.CFrame = v414;
+                                        end
+                                        break
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
+                end);
+            elseif v38.antiGrabCoroutine then
+                local v300 = 0;
+                while true do
+                    if (v300 == 0) then
+                        v38.antiGrabCoroutine:Disconnect();
+                        v38.antiGrabCoroutine = nil;
+                        break
+                    end
+                end
+            end
+            break
+        end
+    end
+end;
+local function v60(v128)
+    local v129 = v128:WaitForChild('Humanoid'):FindFirstChild('Ragdolled');
+    if v129 then
+        local v212 = 0;
+        local v213;
+        while true do
+            if ((0) == v212) then
+                v213 = nil;
+                v213 = v129:GetPropertyChangedSignal('Value'):Connect(function()
+                    while v128:WaitForChild('Humanoid'):FindFirstChild('Ragdolled').Value and task.wait() do
+                        game.Players.LocalPlayer.Character.Humanoid.Sit = true;
+                        game.Players.LocalPlayer.Character.Humanoid.Sit = false;
+                    end
+                end);
+                v212 = 1;
+            end
+            if (v212 == 1) then
+                v38.antiExplosionConnection = v213;
+                break
+            end
+        end
+    end
+end
+v8.AntiExploin = function(v130)
+    local v131 = 0;
+    while true do
+        if (v131 == (0)) then
+            getgenv().AntiExploin = v130;
+            if v130 then
+                if v30.Character then
+                    v60(v30.Character);
+                end
+                v38.characterAddedConn = v30.CharacterAdded:Connect(function(v282)
+                    if v38.antiExplosionConnection then
+                        v38.antiExplosionConnection:Disconnect();
+                    end
+                    v60(v282);
+                end);
+            else
+                local v271 = 0;
+                while true do
+                    if ((0) == v271) then
+                        if v38.antiExplosionConnection then
+                            v38.antiExplosionConnection:Disconnect();
+                            v38.antiExplosionConnection = nil;
+                        end
+                        if v38.characterAddedConn then
+                            v38.characterAddedConn:Disconnect();
+                            v38.characterAddedConn = nil;
+                        end
+                        break
+                    end
+                end
+            end
+            break
+        end
+    end
+end;
+v8.AntiBlobman = function(v132)
+    getgenv().AntiBlobman = v132;
+    if (v132 == true) then
+        local v214 = 0;
+        while true do
+            if (v214 == (0)) then
+                for v283, v284 in pairs(workspace:GetDescendants()) do
+                    if (v284.Name == 'LeftWeld') then
+                        if (v284.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v284.Enabled = false;
+                        end
+                    elseif (v284.Name == 'LeftAlignOrientation') then
+                        if (v284.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v284.Enabled = false;
+                        end
+                    elseif (v284.Name == 'RightWeld') then
+                        if (v284.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v284.Enabled = false;
+                        end
+                    elseif (v284.Name == 'RightAlignOrientation') then
+                        if (v284.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v284.Enabled = false;
+                        end
+                    end
+                end
+                workspace.DescendantAdded:Connect(function(v285)
+                    if (v285.Name == 'LeftWeld') then
+                        if (v285.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v285.Enabled = false;
+                        end
+                    elseif (v285.Name == 'LeftAlignOrientation') then
+                        if (v285.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v285.Enabled = false;
+                        end
+                    elseif (v285.Name == 'RightWeld') then
+                        if (v285.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v285.Enabled = false;
+                        end
+                    elseif (v285.Name == 'RightAlignOrientation') then
+                        if (v285.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                            v285.Enabled = false;
+                        end
+                    end
+                end);
+                break
+            end
+        end
+    end
+    if (v132 == false) then
+        for v233, v234 in pairs(workspace:GetDescendants()) do
+            if (v234.Name == 'LeftWeld') then
+                if (v234.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                    v234.Enabled = true;
+                end
+            elseif (v234.Name == 'LeftAlignOrientation') then
+                if (v234.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                    v234.Enabled = true;
+                end
+            elseif (v234.Name == 'RightWeld') then
+                if (v234.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                    v234.Enabled = true;
+                end
+            elseif (v234.Name == 'RightAlignOrientation') then
+                if (v234.Parent.Parent.Parent ~= workspace:FindFirstChild(v18)) then
+                    v234.Enabled = true;
+                end
+            end
+        end
+    end
+end;
+v8.AntiVoid = function(v134)
+    getgenv().AntiVoid = v134;
+    if v134 then
+        workspace.FallenPartsDestroyHeight = - math.huge;
+    else
+        workspace.FallenPartsDestroyHeight = v37;
+    end
+end;
+v8.AntiLag = function(v136)
+    getgenv().AntiLag = v136;
+    if (v136 == true) then
+        game.Players.LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = false;
+    elseif (v136 == false) then
+        game.Players.LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = true;
+    end
+end;
+local v65;
+v8.SuperStrength = function(v138)
+    getgenv().SuperStrength = v138;
+    if not v138 then
+        local v218 = 0;
+        while true do
+            if (v218 == (0)) then
+                if v65 then
+                    local v303 = 0;
+                    local v304;
+                    while true do
+                        if (v303 == 0) then
+                            v304 = 0;
+                            while true do
+                                if (v304 == 0) then
+                                    v65:Disconnect();
+                                    v65 = nil;
+                                    break
+                                end
+                            end
+                            break
+                        end
+                    end
+                end
+                return
+            end
+        end
+    end
+    if v65 then
+        v65:Disconnect();
+    end
+    v65 = workspace.ChildAdded:Connect(function(v201)
+        if (v201.Name == 'GrabParts') then
+            local v235 = v201:FindFirstChild('GrabPart') and v201.GrabPart:FindFirstChild('WeldConstraint') and v201.GrabPart.WeldConstraint.Part1 ;
+            if (v235 and getgenv().SuperStrength) then
+                local v272 = 0;
+                local v273;
+                while true do
+                    if (v272 == 1) then
+                        v201:GetPropertyChangedSignal('Parent'):Connect(function()
+                            if not v201.Parent then
+                                if (v14:GetLastInputType() == Enum.UserInputType.MouseButton2) then
+                                    v273.MaxForce = Vector3.new(math.huge, math.huge, math.huge);
+                                    v273.Velocity = workspace.CurrentCamera.CFrame.LookVector * (getgenv().ValueStrength or 100) ;
+                                    v13:AddItem(v273, 1);
+                                else
+                                    v273:Destroy();
+                                end
+                            end
+                        end);
+                        break
+                    end
+                    if (v272 == 0) then
+                        v273 = Instance.new('BodyVelocity');
+                        v273.Parent = v235;
+                        v272 = 1;
+                    end
+                end
+            end
+        end
+    end);
+end;
+v8.ValueStrength = function(v140)
+    if (getgenv().SuperStrength == false) then
+        return
+    end
+    getgenv().ValueStrength = v140;
+end;
+function burn(v142)
+    local v143 = 0;
+    local v144;
+    while true do
+        if (v143 == 3) then
+            v38.burnPart.Position = Vector3.new(0, - 50, 0);
+            break
+        end
+        if (v143 == (1)) then
+            v38.burnPart = v144:FindFirstChild('FirePlayerPart') or v144.FirePlayerPart ;
+            v38.burnPart.Size = Vector3.new(7, 7, 7);
+            v143 = 2;
+        end
+        if (v143 == (0)) then
+            if not v18:FindFirstChild('Campfire') then
+                spawn_toy('Campfire');
+            end
+            v144 = v18:FindFirstChild('Campfire');
+            v143 = 1;
+        end
+        if (v143 == (2)) then
+            v38.burnPart.Position = v142.Position;
+            task.wait(0.3);
+            v143 = 3;
+        end
+    end
+end
+function burnGrab()
+    while true do
+        pcall(function()
+            local v219 = workspace:FindFirstChild('GrabParts');
+            if (v219 and (v219.Name == 'GrabParts')) then
+                local v252 = 0;
+                local v253;
+                local v254;
+                local v255;
+                while true do
+                    if (v252 == (1)) then
+                        v255 = v254.Parent:FindFirstChild('Head');
+                        if v255 then
+                            burn(v255);
+                        end
+                        break
+                    end
+                    if (v252 == 0) then
+                        v253 = v219:FindFirstChild('GrabPart');
+                        v254 = v253:FindFirstChild('WeldConstraint').Part1;
+                        v252 = 1;
+                    end
+                end
+            end
+        end);
+        wait();
+    end
+end
+v8.BurnGrab = function(v145)
+    local v146 = 0;
+    while true do
+        if (v146 == (0)) then
+            getgenv().BurnGrab = v145;
+            if getgenv().BurnGrab then
+                if not v38.burnGrabCoroutine then
+                    local v306 = 0;
+                    while true do
+                        if ((0) == v306) then
+                            v38.burnGrabCoroutine = coroutine.create(burnGrab);
+                            coroutine.resume(v38.burnGrabCoroutine);
+                            break
+                        end
+                    end
+                end
+            elseif v38.burnGrabCoroutine then
+                local v307 = 0;
+                while true do
+                    if (v307 == (0)) then
+                        coroutine.close(v38.burnGrabCoroutine);
+                        v38.burnGrabCoroutine = nil;
+                        break
+                    end
+                end
+            end
+            break
+        end
+    end
+end;
+function Rot(v147)
+    local v148 = workspace.Map.AlwaysHereTweenedObjects.OuterUFO.Object.ObjectModel;
+    local v149 = v148:FindFirstChild('PaintPlayerPart') or v148.PaintPlayerPart ;
+    v149.Size = Vector3.new(7, 7, 7);
+    v149.Position = v147.Position;
+    task.wait(0.3);
+    v149.Position = Vector3.new(0, - 50, 0);
+end
+function RotGrab()
+    while true do
+        pcall(function()
+            local v220 = 0;
+            local v221;
+            while true do
+                if (v220 == 0) then
+                    v221 = workspace:FindFirstChild('GrabParts');
+                    if (v221 and (v221.Name == 'GrabParts')) then
+                        local v308 = 0;
+                        local v309;
+                        local v310;
+                        local v311;
+                        while true do
+                            if (v308 == (0)) then
+                                local v356 = 0;
+                                while true do
+                                    if (v356 == (0)) then
+                                        v309 = v221:FindFirstChild('GrabPart');
+                                        v310 = v309:FindFirstChild('WeldConstraint').Part1;
+                                        v356 = 1;
+                                    end
+                                    if (v356 == (1)) then
+                                        v308 = 1;
+                                        break
+                                    end
+                                end
+                            end
+                            if (v308 == (1)) then
+                                v311 = v310.Parent:FindFirstChild('Head');
+                                if v311 then
+                                    Rot(v311);
+                                end
+                                break
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+        end);
+        task.wait();
+    end
+end
+v8.RadiationGrab = function(v153)
+    local v154 = 0;
+    local v155;
+    while true do
+        if (v154 == (0)) then
+            v155 = 0;
+            while true do
+                if (v155 == 0) then
+                    getgenv().RadiationGrab = v153;
+                    if getgenv().RadiationGrab then
+                        if not v38.RadiationGrabCoroutine then
+                            v38.RadiationGrabCoroutine = coroutine.create(RotGrab);
+                            coroutine.resume(v38.RadiationGrabCoroutine);
+                        end
+                    elseif v38.RadiationGrabCoroutine then
+                        local v358 = 0;
+                        while true do
+                            if (v358 == 0) then
+                                coroutine.close(v38.RadiationGrabCoroutine);
+                                v38.RadiationGrabCoroutine = nil;
+                                break
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+            break
+        end
+    end
+end;
+function Posion(v156)
+    local v157 = 0;
+    local v158;
+    local v159;
+    while true do
+        if (v157 == 1) then
+            v159.Size = Vector3.new(7, 7, 7);
+            v159.Position = v156.Position;
+            v157 = 2;
+        end
+        if (2 == v157) then
+            task.wait(0.2999999999999545);
+            v159.Position = Vector3.new(0, - 50, 0);
+            break
+        end
+        if (v157 == 0) then
+            local v246 = 0;
+            while true do
+                if ((0) == v246) then
+                    v158 = workspace.Map.FactoryIsland.PoisonContainer;
+                    v159 = v158:FindFirstChild('PoisonHurtPart') or v158.PoisonHurtPart ;
+                    v246 = 1;
+                end
+                if (v246 == (1)) then
+                    v157 = 1;
+                    break
+                end
+            end
+        end
+    end
+end
+function PosionGrab()
+    while true do
+        local v202 = 0;
+        local v203;
+        while true do
+            if ((0) == v202) then
+                v203 = 0;
+                while true do
+                    if ((0) == v203) then
+                        pcall(function()
+                            local v329 = 0;
+                            local v330;
+                            while true do
+                                if (v329 == (0)) then
+                                    v330 = workspace:FindFirstChild('GrabParts');
+                                    if (v330 and (v330.Name == 'GrabParts')) then
+                                        local v395 = 0;
+                                        local v396;
+                                        local v397;
+                                        local v398;
+                                        while true do
+                                            if (v395 == 0) then
+                                                v396 = v330:FindFirstChild('GrabPart');
+                                                v397 = v396:FindFirstChild('WeldConstraint').Part1;
+                                                v395 = 1;
+                                            end
+                                            if (v395 == (1)) then
+                                                v398 = v397.Parent:FindFirstChild('Head');
+                                                if v398 then
+                                                    Posion(v398);
+                                                end
+                                                break
+                                            end
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        end);
+                        task.wait();
+                        break
+                    end
+                end
+                break
+            end
+        end
+    end
+end
+v8.PoisonGrab = function(v160)
+    local v161 = 0;
+    local v162;
+    while true do
+        if (v161 == (0)) then
+            v162 = 0;
+            while true do
+                if (v162 == (0)) then
+                    getgenv().PoisonGrab = v160;
+                    if getgenv().PoisonGrab then
+                        if not v38.PoisonGrabCoroutine then
+                            v38.PoisonGrabCoroutine = coroutine.create(PosionGrab);
+                            coroutine.resume(v38.PoisonGrabCoroutine);
+                        end
+                    elseif v38.PoisonGrabCoroutine then
+                        local v360 = 0;
+                        local v361;
+                        while true do
+                            if (v360 == (0)) then
+                                v361 = 0;
+                                while true do
+                                    if (v361 == (0)) then
+                                        coroutine.close(v38.PoisonGrabCoroutine);
+                                        v38.PoisonGrabCoroutine = nil;
+                                        break
+                                    end
+                                end
+                                break
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+            break
+        end
+    end
+end;
+function noclipGrab()
+    while true do
+        local v204 = 0;
+        local v205;
+        local v206;
+        while true do
+            if (v204 == 0) then
+                v205, v206 = pcall(function()
+                    local v274 = 0;
+                    local v275;
+                    while true do
+                        if (v274 == (0)) then
+                            v275 = workspace:FindFirstChild('GrabParts');
+                            if (v275 and (v275.Name == 'GrabParts')) then
+                                local v362 = 0;
+                                local v363;
+                                local v364;
+                                local v365;
+                                while true do
+                                    if (v362 == (0)) then
+                                        v363 = v275:FindFirstChild('GrabPart');
+                                        v364 = v363:FindFirstChild('WeldConstraint').Part1;
+                                        v362 = 1;
+                                    end
+                                    if (v362 == (1)) then
+                                        v365 = v364.Parent;
+                                        if (v365:FindFirstChild('HumanoidRootPart') or v365:IsA('Model') or v365:IsA('Player')) then
+                                            while workspace:FindFirstChild('GrabParts') do
+                                                local v420 = 0;
+                                                local v421;
+                                                while true do
+                                                    if (v420 == (0)) then
+                                                        v421 = 0;
+                                                        while true do
+                                                            if (0 == v421) then
+                                                                for v448, v449 in pairs(v365:GetChildren()) do
+                                                                    if v449:IsA('BasePart') then
+                                                                        v449.CanCollide = false;
+                                                                    end
+                                                                end
+                                                                wait();
+                                                                break
+                                                            end
+                                                        end
+                                                        break
+                                                    end
+                                                end
+                                            end
+                                            for v422, v423 in pairs(v365:GetChildren()) do
+                                                if v423:IsA('BasePart') then
+                                                    v423.CanCollide = true;
+                                                end
+                                            end
+                                        end
+                                        break
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
+                end);
+                wait();
+                break
+            end
+        end
+    end
+end
+v8.NoClipGrab = function(v163)
+    local v164 = 0;
+    while true do
+        if (v164 == (0)) then
+            getgenv().NoClipGrab = v163;
+            if getgenv().NoClipGrab then
+                if not v38.NoClipGrabCoroutine then
+                    local v312 = 0;
+                    while true do
+                        if (v312 == 0) then
+                            v38.NoClipGrabCoroutine = coroutine.create(noclipGrab);
+                            coroutine.resume(v38.NoClipGrabCoroutine);
+                            break
+                        end
+                    end
+                end
+            elseif v38.NoClipGrabCoroutine then
+                local v313 = 0;
+                while true do
+                    if (v313 == (0)) then
+                        coroutine.close(v38.NoClipGrabCoroutine);
+                        v38.NoClipGrabCoroutine = nil;
+                        break
+                    end
+                end
+            end
+            break
+        end
+    end
+end;
+v8.KillGrab = function(v165)
+    local v166 = 0;
+    while true do
+        if (v166 == (0)) then
+            getgenv().KillGrab = v165;
+            if getgenv().KillGrab then
+                while getgenv().KillGrab and task.wait() do
+                    local v289 = 0;
+                    local v290;
+                    while true do
+                        if (v289 == (0)) then
+                            v290 = workspace:FindFirstChild('GrabParts');
+                            if (v290 and (v290.Name == 'GrabParts')) then
+                                local v381 = v290:FindFirstChild('GrabPart');
+                                local v382 = v381:FindFirstChild('WeldConstraint').Part1;
+                                local v383 = v382.Parent;
+                                local v384 = v383.Parent;
+                                if v382.Parent then
+                                    local v401 = 0;
+                                    local v402;
+                                    while true do
+                                        if ((0) == v401) then
+                                            v402 = 0;
+                                            while true do
+                                                if ((0) == v402) then
+                                                    wait(0.5);
+                                                    v383.Humanoid.Health = 0;
+                                                    break
+                                                end
+                                            end
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
+                end
+            end
+            break
+        end
+    end
+end;
+v8.AirGrab = function(v167)
+    local v168 = 0;
+    while true do
+        if (v168 == (0)) then
+            getgenv().AirGrab = v167;
+            v16.ChildAdded:Connect(function(v256)
+                if (v256.Name == 'GrabParts') then
+                    local v291 = v256.GrabPart.WeldConstraint.Part1;
+                    local v292;
+                    local v293 = v291.Parent;
+                    if getgenv().AirGrab then
+                        local v331 = 0;
+                        local v332;
+                        while true do
+                            if (v331 == (0)) then
+                                v332 = 0;
+                                while true do
+                                    if (v332 == (0)) then
+                                        if v293:FindFirstChild('Humanoid') then
+                                            local v424 = 0;
+                                            local v425;
+                                            while true do
+                                                if (v424 == (0)) then
+                                                    v425 = 0;
+                                                    while true do
+                                                        if ((0) == v425) then
+                                                            v292 = Instance.new('BodyVelocity', v291);
+                                                            v292.MaxForce = Vector3.new(0, 9999999, 0);
+                                                            v425 = 1;
+                                                        end
+                                                        if (v425 == (1)) then
+                                                            v292.Velocity = Vector3.new(0, math.huge, 0);
+                                                            v13:AddItem(v292, 100);
+                                                            break
+                                                        end
+                                                    end
+                                                    break
+                                                end
+                                            end
+                                        end
+                                        v256:GetPropertyChangedSignal('Parent'):Connect(function()
+                                            if (not v256.Parent and v292) then
+                                                v292:Destroy();
+                                            end
+                                        end);
+                                        break
+                                    end
+                                end
+                                break
+                            end
+                        end
+                    end
+                end
+            end);
+            break
+        end
+    end
+end;
+function sendToHeaven(v169)
+    if (v169 and v169.Character) then
+        local v222 = v169.Character:FindFirstChild('HumanoidRootPart');
+        if v222 then
+            local v257 = 0;
+            local v258;
+            while true do
+                if (v257 == (2)) then
+                    v258.Parent = v222;
+                    v258.Velocity = Vector3.new(0, 9999999, 0);
+                    v257 = 3;
+                end
+                if (v257 == (0)) then
+                    v23:FireServer(v169.Character.Head or v169.Character.Torso, v169.Character.HumanoidRootPart.CFrame);
+                    task.wait(0.1);
+                    v257 = 1;
+                end
+                if (v257 == (1)) then
+                    v258 = v222:FindFirstChild('heavenD') or Instance.new('BodyVelocity') ;
+                    v258.Name = 'heavenD';
+                    v257 = 2;
+                end
+                if (v257 == (3)) then
+                    v258.MaxForce = Vector3.new(0, math.huge, 0);
+                    v13:AddItem(v258, 100);
+                    break
+                end
+            end
+        end
+    end
+end
+local v74 = false;
+local v75 = false;
+v8.KickAura = function(v170)
+    local v171 = 0;
+    while true do
+        if (v171 == (0)) then
+            getgenv().KickAura = v170;
+            if v74 then
+                return
+            end
+            v171 = 1;
+        end
+        if (v171 == (1)) then
+            v74 = true;
+            task.spawn(function()
+                local v259 = 0;
+                while true do
+                    if (v259 == 0) then
+                        while getgenv().KickAura do
+                            local v333 = 0;
+                            local v334;
+                            while true do
+                                if (v333 == (0)) then
+                                    task.wait(0.02);
+                                    v334 = v30.Character;
+                                    v333 = 1;
+                                end
+                                if ((1) == v333) then
+                                    if (v334 and v334:FindFirstChild('HumanoidRootPart')) then
+                                        local v403 = 0;
+                                        local v404;
+                                        while true do
+                                            if (v403 == 0) then
+                                                v404 = v334.HumanoidRootPart.Position;
+                                                for v429, v430 in pairs(v17:GetPlayers()) do
+                                                    if ((v430 ~= v30) and v430.Character and v430.Character:FindFirstChild('HumanoidRootPart')) then
+                                                        if (not getgenv().whiteListEnabled or not v30:IsFriendsWith(v430.UserId)) then
+                                                            local v442 = 0;
+                                                            local v443;
+                                                            while true do
+                                                                if (v442 == (0)) then
+                                                                    v443 = v430.Character.HumanoidRootPart.Position;
+                                                                    if ((v404 - v443).Magnitude <= v38.auraRadius) then
+                                                                        sendToHeaven(v430);
+                                                                    end
+                                                                    break
+                                                                end
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                                break
+                                            end
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                        v74 = false;
+                        break
+                    end
+                end
+            end);
+            break
+        end
+    end
+end;
+function attractPlayer(v172)
+    if (v172 and v172.Character) then
+        local v223 = v172.Character:FindFirstChild('HumanoidRootPart');
+        if v223 then
+            local v260 = 0;
+            local v261;
+            local v262;
+            while true do
+                if (v260 == (0)) then
+                    v23:FireServer(v223, v172.Character.HumanoidRootPart.CFrame);
+                    task.wait(0.1);
+                    v260 = 1;
+                end
+                if (v260 == 1) then
+                    local v318 = 0;
+                    while true do
+                        if (v318 == 0) then
+                            v261 = v223:FindFirstChild('Magnet') or Instance.new('BodyPosition') ;
+                            v261.Name = 'Magnet';
+                            v318 = 1;
+                        end
+                        if (v318 == 1) then
+                            v260 = 2;
+                            break
+                        end
+                    end
+                end
+                if (v260 == 4) then
+                    game:GetService('Debris'):AddItem(v261, 9.999999999990905E-2);
+                    break
+                end
+                if (v260 == (3)) then
+                    v262 = game.Players.LocalPlayer.Character.HumanoidRootPart.Position;
+                    v261.Position = v262;
+                    v260 = 4;
+                end
+                if (v260 == 2) then
+                    v261.MaxForce = Vector3.new(math.huge, math.huge, math.huge);
+                    v261.Parent = v223;
+                    v260 = 3;
+                end
+            end
+        end
+    end
+end
+v8.MagneticAura = function(v173)
+    getgenv().MagneticAura = v173;
+    if v75 then
+        return
+    end
+    v75 = true;
+    task.spawn(function()
+        local v207 = 0;
+        while true do
+            if (v207 == (0)) then
+                while getgenv().MagneticAura do
+                    local v276 = 0;
+                    local v277;
+                    while true do
+                        if ((0) == v276) then
+                            task.wait(1);
+                            v277 = game.Players.LocalPlayer.Character;
+                            v276 = 1;
+                        end
+                        if (v276 == (1)) then
+                            if (v277 and v277:FindFirstChild('HumanoidRootPart')) then
+                                local v369 = 0;
+                                local v370;
+                                while true do
+                                    if ((0) == v369) then
+                                        v370 = v277.HumanoidRootPart.Position;
+                                        for v409, v410 in pairs(game.Players:GetPlayers()) do
+                                            if ((v410 ~= game.Players.LocalPlayer) and v410.Character and v410.Character:FindFirstChild('HumanoidRootPart')) then
+                                                if (not getgenv().whiteListEnabled or not game.Players.LocalPlayer:IsFriendsWith(v410.UserId)) then
+                                                    local v435 = v410.Character.HumanoidRootPart.Position;
+                                                    if ((v370 - v435).Magnitude <= v38.auraRadius) then
+                                                        attractPlayer(v410);
+                                                    end
+                                                end
+                                            end
+                                        end
+                                        break
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
+                end
+                v75 = false;
+                break
+            end
+        end
+    end);
+end;
+local v78 = getDescendantParts('PaintPlayerPart');
+local v79 = getDescendantParts('PoisonHurtPart');
+v8.RadiationAura = function(v175)
+    getgenv().RadiationAura = v175;
+    if getgenv().RadiationAura then
+        local v224 = 0;
+        while true do
+            if ((0) == v224) then
+                v38.radiactiveAuraCoroutine = coroutine.create(function()
+                    local v294 = 0;
+                    local v295;
+                    while true do
+                        if (v294 == (0)) then
+                            v295 = {};
+                            while v175 do
+                                local v371 = 0;
+                                while true do
+                                    if (v371 == (0)) then
+                                        pcall(function()
+                                            local v411 = 0;
+                                            local v412;
+                                            while true do
+                                                if (v411 == (0)) then
+                                                    v412 = v30.Character;
+                                                    if (v412 and v412:FindFirstChild('HumanoidRootPart')) then
+                                                        local v437 = 0;
+                                                        local v438;
+                                                        while true do
+                                                            if (v437 == (0)) then
+                                                                v438 = v412.HumanoidRootPart;
+                                                                for v450, v451 in pairs(v17:GetPlayers()) do
+                                                                    if ((v451 ~= v30) and v451.Character and (not getgenv().whiteListEnabled or not v30:IsFriendsWith(v451.UserId))) then
+                                                                        local v456 = 0;
+                                                                        local v457;
+                                                                        local v458;
+                                                                        while true do
+                                                                            if (v456 == (0)) then
+                                                                                v457 = v451.Character;
+                                                                                v458 = v457:FindFirstChild('HumanoidRootPart');
+                                                                                v456 = 1;
+                                                                            end
+                                                                            if ((1) == v456) then
+                                                                                if v458 then
+                                                                                    local v463 = 0;
+                                                                                    local v464;
+                                                                                    while true do
+                                                                                        if (v463 == 0) then
+                                                                                            v464 = (v438.Position - v458.Position).Magnitude;
+                                                                                            if ((v464 <= v38.auraRadius) and (v457.Humanoid.Health > (0))) then
+                                                                                                local v476 = v457:FindFirstChild('Head');
+                                                                                                if not v295[v451] then
+                                                                                                    local v484 = 0;
+                                                                                                    while true do
+                                                                                                        if (v484 == (0)) then
+                                                                                                            v23:FireServer(v458, v458.CFrame);
+                                                                                                            v295[v451] = true;
+                                                                                                            break
+                                                                                                        end
+                                                                                                    end
+                                                                                                end
+                                                                                                for v478, v479 in pairs(v78) do
+                                                                                                    local v480 = 0;
+                                                                                                    while true do
+                                                                                                        if (v480 == (0)) then
+                                                                                                            v479.Size = Vector3.new(1, 3, 1);
+                                                                                                            v479.Transparency = 1;
+                                                                                                            v480 = 1;
+                                                                                                        end
+                                                                                                        if ((1) == v480) then
+                                                                                                            v479.Position = v476.Position;
+                                                                                                            break
+                                                                                                        end
+                                                                                                    end
+                                                                                                end
+                                                                                                wait();
+                                                                                                for v481, v482 in pairs(v78) do
+                                                                                                    v482.Position = Vector3.new(0, - 200, 0);
+                                                                                                end
+                                                                                            else
+                                                                                                v295[v451] = nil;
+                                                                                            end
+                                                                                            break
+                                                                                        end
+                                                                                    end
+                                                                                end
+                                                                                break
+                                                                            end
+                                                                        end
+                                                                    end
+                                                                end
+                                                                break
+                                                            end
+                                                        end
+                                                    end
+                                                    break
+                                                end
+                                            end
+                                        end);
+                                        wait(0.02);
+                                        break
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
+                end);
+                coroutine.resume(v38.radiactiveAuraCoroutine);
+                break
+            end
+        end
+    elseif v38.radiactiveAuraCoroutine then
+        local v263 = 0;
+        while true do
+            if (v263 == 1) then
+                v38.radiactiveAuraCoroutine = nil;
+                break
+            end
+            if (v263 == (0)) then
+                coroutine.close(v38.radiactiveAuraCoroutine);
+                for v336, v337 in pairs(v78) do
+                    v337.Position = Vector3.new(0, - 200, 0);
+                end
+                v263 = 1;
+            end
+        end
+    end
+end;
+v8.PoisonAura = function(v177)
+    getgenv().PoisonAura = v177;
+    if getgenv().PoisonAura then
+        local v225 = 0;
+        while true do
+            if (v225 == 0) then
+                v38.PoisonAuraCoroutine = coroutine.create(function()
+                    local v296 = {};
+                    while v177 do
+                        local v324 = 0;
+                        while true do
+                            if (v324 == 0) then
+                                pcall(function()
+                                    local v386 = 0;
+                                    local v387;
+                                    while true do
+                                        if (v386 == (0)) then
+                                            v387 = v30.Character;
+                                            if (v387 and v387:FindFirstChild('HumanoidRootPart')) then
+                                                local v427 = v387.HumanoidRootPart;
+                                                for v432, v433 in pairs(v17:GetPlayers()) do
+                                                    if ((v433 ~= v30) and v433.Character and (not getgenv().whiteListEnabled or not v30:IsFriendsWith(v433.UserId))) then
+                                                        local v439 = 0;
+                                                        local v440;
+                                                        local v441;
+                                                        while true do
+                                                            if (v439 == (1)) then
+                                                                if v441 then
+                                                                    local v453 = 0;
+                                                                    local v454;
+                                                                    while true do
+                                                                        if (v453 == (0)) then
+                                                                            v454 = (v427.Position - v441.Position).Magnitude;
+                                                                            if ((v454 <= v38.auraRadius) and (v440.Humanoid.Health > 0)) then
+                                                                                local v461 = v440:FindFirstChild('Head');
+                                                                                if not v296[v433] then
+                                                                                    v23:FireServer(v441, v441.CFrame);
+                                                                                    v296[v433] = true;
+                                                                                end
+                                                                                for v465, v466 in pairs(v79) do
+                                                                                    v466.Size = Vector3.new(1, 3, 1);
+                                                                                    v466.Transparency = 1;
+                                                                                    v466.Position = v461.Position;
+                                                                                end
+                                                                                wait();
+                                                                                for v471, v472 in pairs(v79) do
+                                                                                    v472.Position = Vector3.new(0, - 200, 0);
+                                                                                end
+                                                                            else
+                                                                                v296[v433] = nil;
+                                                                            end
+                                                                            break
+                                                                        end
+                                                                    end
+                                                                end
+                                                                break
+                                                            end
+                                                            if (v439 == (0)) then
+                                                                v440 = v433.Character;
+                                                                v441 = v440:FindFirstChild('HumanoidRootPart');
+                                                                v439 = 1;
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                            break
+                                        end
+                                    end
+                                end);
+                                wait(2E-2);
+                                break
+                            end
+                        end
+                    end
+                end);
+                coroutine.resume(v38.PoisonAuraCoroutine);
+                break
+            end
+        end
+    elseif v38.PoisonAuraCoroutine then
+        local v264 = 0;
+        while true do
+            if (v264 == (1)) then
+                v38.PoisonAuraCoroutine = nil;
+                break
+            end
+            if (v264 == (0)) then
+                coroutine.close(v38.PoisonAuraCoroutine);
+                for v339, v340 in pairs(v79) do
+                    v340.Position = Vector3.new(0, - 200, 0);
+                end
+                v264 = 1;
+            end
+        end
+    end
+end;
+v8.AuraWhiteList = function(v179)
+    getgenv().whiteListEnabled = v179;
+end;
+getgenv().LineRBG = false;
+getgenv().invisline = false;
+local v85;
+local v86;
+v8.RbgLine = function(v181)
+    local v182 = 0;
+    local v183;
+    while true do
+        if ((0) == v182) then
+            v183 = 0;
+            while true do
+                if (v183 == 1) then
+                    if v181 then
+                        v85 = task.spawn(function()
+                            while getgenv().LineRBG do
+                                local v372 = 0;
+                                local v373;
+                                while true do
+                                    if (v372 == (1)) then
+                                        task.wait(0.01);
+                                        break
+                                    end
+                                    if (v372 == 0) then
+                                        v373 = {
+                                            [1] = ColorSequence.new(Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255)))
+                                        };
+                                        game:GetService('ReplicatedStorage').DataEvents.UpdateLineColorsEvent:FireServer(unpack(v373));
+                                        v372 = 1;
+                                    end
+                                end
+                            end
+                        end);
+                    end
+                    break
+                end
+                if (v183 == (0)) then
+                    getgenv().LineRBG = v181;
+                    if v85 then
+                        task.cancel(v85);
+                    end
+                    v183 = 1;
+                end
+            end
+            break
+        end
+    end
+end;
+v8.InvisibleGrab = function(v184)
+    local v185 = 0;
+    local v186;
+    while true do
+        if (v185 == (0)) then
+            v186 = 0;
+            while true do
+                if (v186 == (1)) then
+                    if v184 then
+                        v86 = task.spawn(function()
+                            while getgenv().invisline do
+                                local v374 = 0;
+                                while true do
+                                    if (v374 == (0)) then
+                                        task.wait(0.2);
+                                        game:GetService('ReplicatedStorage').GrabEvents.CreateGrabLine:FireServer();
+                                        break
+                                    end
+                                end
+                            end
+                        end);
+                    end
+                    break
+                end
+                if (v186 == 0) then
+                    getgenv().invisline = v184;
+                    if v86 then
+                        task.cancel(v86);
+                    end
+                    v186 = 1;
+                end
+            end
+            break
+        end
+    end
+end;
+getgenv().Blobman = false;
+getgenv().blobWhiteListEnabled = false;
+local v91 = {
+    'Mr_Voidz13',
+    'ex0lir'
+};
+local v92;
+local function v93(v187)
+    local v188 = 0;
+    while true do
+        if (v188 == (0)) then
+            for v265, v266 in pairs(v91) do
+                if (v187.Name == v266) then
+                    return true
+                end
+            end
+            return false
+        end
+    end
+end
+local function v94(v189)
+    return v30:IsFriendsWith(v189.UserId)
+end
+local function v95(v190, v191)
+    if (v190.Character and v190.Character:FindFirstChild('HumanoidRootPart') and v191) then
+        local v226 = 0;
+        local v227;
+        while true do
+            if ((0) == v226) then
+                v227 = v191:FindFirstChild('LeftDetector');
+                if v227 then
+                    local v326 = 0;
+                    local v327;
+                    while true do
+                        if (v326 == 0) then
+                            v327 = {
+                                v227,
+                                v190.Character:FindFirstChild('HumanoidRootPart'),
+                                v227:FindFirstChild('LeftWeld')
+                            };
+                            v191:WaitForChild('BlobmanSeatAndOwnerScript'):WaitForChild('CreatureGrab'):FireServer(unpack(v327));
+                            break
+                        end
+                    end
+                end
+                break
+            end
+        end
+    end
+end
+local function v96(v192)
+    while getgenv().Blobman do
+        local v208 = 0;
+        local v209;
+        while true do
+            if (v208 == (0)) then
+                v209 = 0;
+                while true do
+                    if (v209 == 0) then
+                        for v342, v343 in ipairs(v17:GetPlayers()) do
+                            if ((v343 ~= v30) and not v93(v343)) then
+                                if (not getgenv().blobWhiteListEnabled or not v94(v343)) then
+                                    v95(v343, v192);
+                                end
+                            end
+                        end
+                        task.wait();
+                        break
+                    end
+                end
+                break
+            end
+        end
+    end
+end
+v8.DestroyServer = function(v193)
+    local v194 = 0;
+    local v195;
+    while true do
+        if (v194 == 0) then
+            v195 = 0;
+            while true do
+                if ((0) == v195) then
+                    getgenv().Blobman = v193;
+                    if getgenv().Blobman then
+                        local v344;
+                        for v347, v348 in pairs(game.Workspace:GetDescendants()) do
+                            if ((v348.Name == 'CreatureBlobman') and v348:FindFirstChild('VehicleSeat') and v348.VehicleSeat:FindFirstChild('SeatWeld') and v348.VehicleSeat.SeatWeld.Part1:IsDescendantOf(v30.Character)) then
+                                v344 = v348;
+                                break
+                            end
+                        end
+                        if v344 then
+                            v92 = coroutine.create(function()
+                                v96(v344);
+                            end);
+                            coroutine.resume(v92);
+                        end
+                    elseif v92 then
+                        local v375 = 0;
+                        local v376;
+                        while true do
+                            if (v375 == 0) then
+                                v376 = 0;
+                                while true do
+                                    if (0 == v376) then
+                                        coroutine.close(v92);
+                                        v92 = nil;
+                                        break
+                                    end
+                                end
+                                break
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+            break
+        end
+    end
+end;
+v8.DestroyServerWhite = function(v196)
+    getgenv().blobWhiteListEnabled = v196;
+end;
+return v8
