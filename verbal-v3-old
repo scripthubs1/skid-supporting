@@ -1,0 +1,1061 @@
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+local Window = OrionLib:MakeWindow({
+    Name = "Verbal Hub v3 Ftap",
+    HidePremium = false,
+    SaveConfig = true,
+    IntroEnabled = true,
+    IntroText = "Welcome To Verbal Hub V3 Ftap",
+    IntroIcon = "rbxassetid://112374567322808",
+    ConfigFolder = "Verbal Config"
+})
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+-- Variables
+local localPlayer = Players.LocalPlayer
+local GrabEvent = ReplicatedStorage:WaitForChild("GrabEvents"):WaitForChild("CreateGrabLine")
+local WhitelistedPlayers = WhitelistedPlayers or {}
+local PermanentWhitelist = {
+    s3i5t = true,
+    JESSETC92BACKUP23 = true,
+    JESSETC92111 = true,
+    hahshsin = true,
+    Blizz_T = true,
+    SaviorLiberty = true,
+    Lokick07 = true,
+    ggerrtasalt = true,
+    ["76rgoyf"] = true,
+    Sofiatheprincesa123 = true
+}
+
+-- Utility Functions
+local function IsInWhitelist(playerName)
+return PermanentWhitelist[playerName] or WhitelistedPlayers[playerName]
+end
+
+-- Main Tab
+local MainTab = Window:MakeTab({
+Name = "Main",
+Icon = "rbxassetid://4483345998"
+})
+
+-- Lag Settings
+local lagIntensity = 50
+local batchSize = 50
+local batchInterval = 0.08
+local reExecuteEnabled = false
+local reExecuteInterval = 3
+local mainEnabled = false
+local invisibleLagEnabled = false
+local nonLagLagEnabled = false
+local range = 100
+local targetPart = Workspace:FindFirstChildOfClass("Part")
+local randomRange = 100
+local loopsPerRequest = 1000
+local isLagAllToggled = false
+local targetType = "Workspace"
+local currentPlayerIndex = 1
+local speedMultiplier = 1.1
+
+-- Lag Functions
+local function fireGrabEventsForWorkspace()
+for i = 1, batchSize do
+task.spawn(function()
+local target = Workspace:FindFirstChildOfClass("Part")
+if target then
+    local randomPos = Vector3.new(
+    math.random(-range, range),
+    math.random(-range, range),
+    math.random(-range, range)
+    )
+    GrabEvent:FireServer(target, CFrame.new(randomPos))
+end
+end)
+end
+end
+
+local function fireNonLagLagEvents()
+if targetType == "Workspace" then
+for i = 1, batchSize do
+task.spawn(function()
+local target = Workspace:FindFirstChildOfClass("Part")
+if target then
+local randomPos = Vector3.new(
+math.random(-range, range),
+math.random(-range, range),
+math.random(-range, range)
+)
+GrabEvent:FireServer(target, CFrame.new(randomPos))
+end
+end)
+end
+end
+end
+
+local function fireGrabEventsForOtherTargets()
+if targetType == "AllPlayersHead" then
+for _, player in ipairs(Players:GetPlayers()) do
+if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+task.spawn(function()
+local target = player.Character:FindFirstChild("Head")
+if target then
+local currentInterval = batchInterval
+while mainEnabled do
+GrabEvent:FireServer(target, CFrame.new(target.Position))
+wait(currentInterval)
+currentInterval = math.max(0.1, currentInterval / speedMultiplier)
+end
+end
+end)
+end
+end
+elseif targetType == "WhitelistedPlayersHead" then
+local playerList = {}
+for playerName in pairs(WhitelistedPlayers) do
+local player = Players:FindFirstChild(playerName)
+if player then
+table.insert(playerList, player)
+end
+end
+
+if #playerList > 0 then
+currentPlayerIndex = (currentPlayerIndex % #playerList) + 1
+local player = playerList[currentPlayerIndex]
+task.spawn(function()
+local target = player.Character and player.Character:FindFirstChild("Head")
+if target then
+local currentInterval = batchInterval
+while mainEnabled do
+GrabEvent:FireServer(target, CFrame.new(0.1125335693359375, -0.15124130249023438, -0.5) * CFrame.Angles(3.031834602355957, -1.3067572116851807, -3.1407527923583984))
+wait(currentInterval)
+currentInterval = math.max(0.1, currentInterval / speedMultiplier)
+end
+end
+end)
+end
+end
+end
+
+local function fireInvisibleLagEvent()
+local targetPart = targetPart
+local randomRange = randomRange
+local loopsPerRequest = loopsPerRequest
+
+if targetPart and randomRange and loopsPerRequest then
+local randomPositions = {}
+for i = 1, loopsPerRequest do
+local randomPosition = CFrame.new(
+math.random(-randomRange, randomRange),
+math.random(-randomRange, randomRange),
+math.random(-randomRange, randomRange)
+)
+table.insert(randomPositions, randomPosition)
+end
+
+if GrabEvent then
+GrabEvent:FireServer(targetPart, randomPositions)
+else
+warn("GrabEvent is not defined!")
+end
+else
+warn("targetPart, randomRange, or loopsPerRequest is not defined!")
+end
+end
+
+local function reExecuteLoop()
+while reExecuteEnabled do
+task.wait(reExecuteInterval)
+if mainEnabled then
+if targetType == "Workspace" then
+fireGrabEventsForWorkspace()
+else
+fireGrabEventsForOtherTargets()
+end
+end
+end
+end
+
+local function createLagWithGrabLine()
+for _, object in ipairs(Workspace:GetDescendants()) do
+if object:IsA("BasePart") and (object.Parent ~= localPlayer.Character) then
+local cf = object.CFrame *
+CFrame.new(
+math.random(-lagIntensity, lagIntensity),
+math.random(-lagIntensity, lagIntensity),
+math.random(-lagIntensity, lagIntensity)
+) *
+CFrame.Angles(
+math.rad(math.random(0, 360)),
+math.rad(math.random(0, 360)),
+math.rad(math.random(0, 360))
+)
+GrabEvent:FireServer(object, cf)
+end
+end
+end
+
+local function toggleLagAll()
+if isLagAllToggled then
+spawn(function()
+local currentInterval = reExecuteInterval
+while isLagAllToggled do
+createLagWithGrabLine()
+task.wait(currentInterval)
+currentInterval = math.max(0.1, currentInterval / speedMultiplier)
+end
+end)
+end
+end
+
+-- Main Tab UI
+MainTab:AddDropdown({
+Name = "Target",
+Default = "Workspace",
+Options = {"Workspace", "AllPlayersHead", "WhitelistedPlayersHead"},
+Callback = function(selected)
+targetType = selected
+if selected == "Workspace" then
+speedMultiplier = 1.1
+end
+end
+})
+
+MainTab:AddSlider({
+Name = "Lag Intensity",
+Min = 1,
+Max = 100,
+Default = 1,
+Color = Color3.fromRGB(255, 0, 0),
+Increment = 1,
+Callback = function(value)
+lagIntensity = value
+batchSize = value * 5
+batchInterval = 0.1 / value
+end
+})
+
+MainTab:AddToggle({
+Name = "Enable Lag",
+Default = false,
+Callback = function(value)
+mainEnabled = value
+if value then
+while mainEnabled do
+if targetType == "Workspace" then
+fireGrabEventsForWorkspace()
+else
+fireGrabEventsForOtherTargets()
+end
+wait(1)
+end
+end
+end
+})
+
+MainTab:AddToggle({
+Name = "Invisible Lag All",
+Default = false,
+Callback = function(value)
+invisibleLagEnabled = value
+if value then
+while invisibleLagEnabled do
+fireInvisibleLagEvent()
+task.wait()
+end
+end
+end
+})
+
+MainTab:AddToggle({
+Name = "Non-Lag Lag All",
+Default = false,
+Callback = function(value)
+nonLagLagEnabled = value
+if value then
+while nonLagLagEnabled do
+fireNonLagLagEvents()
+task.wait()
+end
+end
+end
+})
+
+MainTab:AddToggle({
+Name = "Lag All (perm)",
+Default = false,
+Callback = function(value)
+isLagAllToggled = value
+toggleLagAll()
+end
+})
+
+MainTab:AddSlider({
+Name = "Workspace Lag Intensity",
+Min = 1,
+Max = 2000,
+Default = 50,
+Increment = 10,
+Callback = function(value)
+lagIntensity = value
+end
+})
+
+MainTab:AddSlider({
+Name = "Re-Execute Interval (s)",
+Min = 0.1,
+Max = 1,
+Default = 0.4,
+Color = Color3.fromRGB(255, 0, 0),
+Increment = 0.05,
+Callback = function(value)
+reExecuteInterval = value
+end
+})
+
+MainTab:AddToggle({
+Name = "Re-Execute Lag",
+Default = false,
+Callback = function(value)
+reExecuteEnabled = value
+if value then
+task.spawn(reExecuteLoop)
+end
+end
+})
+
+MainTab:AddSlider({
+Name = "Speed Multiplier",
+Min = 1.1,
+Max = 2,
+Default = 1.1,
+Color = Color3.fromRGB(0, 0, 255),
+Increment = 0.1,
+Callback = function(value)
+speedMultiplier = value
+end
+})
+
+MainTab:AddToggle({
+Name = "Anti Lag",
+Default = false,
+Callback = function(Value)
+local grabEvents = ReplicatedStorage:FindFirstChild("GrabEvents")
+if not grabEvents then
+warn("GrabEvents folder not found!")
+return
+end
+
+if Value then
+grabEvents:FindFirstChild("CreateGrabLine"):Destroy()
+elseif not grabEvents:FindFirstChild("CreateGrabLine") then
+Instance.new("RemoteEvent", grabEvents).Name = "CreateGrabLine"
+end
+end
+})
+
+-- Whitelist Tab
+local WhitelistTab = Window:MakeTab({
+Name = "Whitelist",
+Icon = "rbxassetid://4483345998"
+})
+
+local selectedPlayers = {}
+local whitelistDropdown = WhitelistTab:AddDropdown({
+Name = "Select Player",
+Options = {},
+Callback = function(player)
+selectedPlayers[player] = true
+end
+})
+
+local whitelistedDropdown = WhitelistTab:AddDropdown({
+Name = "Whitelisted Players",
+Options = {},
+Callback = function(player)
+selectedPlayers[player] = true
+end
+})
+
+local function updateWhitelistDropdown()
+local playerNames = {}
+for playerName in pairs(WhitelistedPlayers) do
+table.insert(playerNames, playerName)
+end
+whitelistedDropdown:Refresh(playerNames, true)
+end
+
+local function updatePlayerDropdown()
+local playerOptions = {}
+for _, player in ipairs(Players:GetPlayers()) do
+if player ~= localPlayer and not WhitelistedPlayers[player.Name] then
+local displayOption = player.Name .. " (" .. player.DisplayName .. ")"
+table.insert(playerOptions, displayOption)
+end
+end
+whitelistDropdown:Refresh(playerOptions, true)
+end
+
+Players.PlayerAdded:Connect(updatePlayerDropdown)
+Players.PlayerRemoving:Connect(updatePlayerDropdown)
+
+updatePlayerDropdown()
+updateWhitelistDropdown()
+
+WhitelistTab:AddButton({
+Name = "Add Player",
+Callback = function()
+for playerName in pairs(selectedPlayers) do
+local username = playerName:match("^(.-) %(") or playerName
+WhitelistedPlayers[username] = true
+end
+updateWhitelistDropdown()
+updatePlayerDropdown()
+selectedPlayers = {}
+end
+})
+
+WhitelistTab:AddButton({
+Name = "Remove Player",
+Callback = function()
+for playerName in pairs(selectedPlayers) do
+local username = playerName:match("^(.-) %(") or playerName
+WhitelistedPlayers[username] = nil
+end
+updateWhitelistDropdown()
+updatePlayerDropdown()
+selectedPlayers = {}
+end
+})
+
+-- Warning Tab
+local WarningTab = Window:MakeTab({
+Name = "Warnings",
+Icon = "rbxassetid://4483345998",
+PremiumOnly = false
+})
+
+WarningTab:AddParagraph("Warning Section", "In the options hub, there is a section labeled '(place shurkin if u dont wanna get kicked 20% of getting kicked you should hide).' This section serves as a warning for users to strategically use a specific item, known as 'shurkin,' to avoid the risk of being kicked from the game. Players are advised that there is a 20% chance of being kicked and should consider hiding to increase their chances of staying in the game.")
+
+-- Auras Tab
+local GrabWhitelist = Window:MakeTab({
+Name = "Auras",
+Icon = "rbxassetid://4483345998",
+PremiumOnly = false
+})
+
+-- Tornado Settings
+local TornadoSettings = {
+Enabled = false,
+Layers = 3,
+Speed = 50,
+Height = 10,
+MaxDistance = 40,
+FlingVelocity = 999,
+RotationSpeed = 50,
+RadiusMultiplier = 10,
+PlayerSeparation = 5,
+GrabInterval = 0.5,
+MinDistance = 5,
+ApproachSpeed = 20
+}
+
+local lastGrabTime = 0
+local TornadoParts = {}
+local flungPlayers = {}
+
+local function setNoclip(character, state)
+for _, part in ipairs(character:GetDescendants()) do
+if part:IsA("BasePart") then
+part.CanCollide = not state
+end
+end
+end
+
+local function setNetworkOwner(part)
+pcall(function()
+ReplicatedStorage.GrabEvents.SetNetworkOwner:FireServer(part, part.CFrame)
+end)
+end
+
+local function createBodyMovers(part, targetPosition, rotation, approach)
+local existingMover = TornadoParts[part]
+if not existingMover then
+local bodyVelocity = Instance.new("BodyVelocity", part)
+bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+local bodyGyro = Instance.new("BodyGyro", part)
+bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+TornadoParts[part] = {
+Velocity = bodyVelocity,
+Gyro = bodyGyro
+}
+else
+if approach then
+existingMover.Velocity.Velocity = (targetPosition - part.Position).Unit * TornadoSettings.ApproachSpeed
+else
+existingMover.Velocity.Velocity = (targetPosition - part.Position).Unit * TornadoSettings.Speed
+end
+existingMover.Gyro.CFrame = rotation
+end
+end
+
+local function flingPlayer(part)
+if TornadoParts[part] then
+TornadoParts[part].Velocity:Destroy()
+TornadoParts[part].Gyro:Destroy()
+TornadoParts[part] = nil
+end
+
+local bodyVelocity = Instance.new("BodyVelocity", part)
+bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+bodyVelocity.Velocity = Vector3.new(
+math.random(-TornadoSettings.FlingVelocity, TornadoSettings.FlingVelocity),
+TornadoSettings.FlingVelocity,
+math.random(-TornadoSettings.FlingVelocity, TornadoSettings.FlingVelocity)
+)
+Debris:AddItem(bodyVelocity, 1)
+end
+
+local function tornadoEffect()
+local localCharacter = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local localRoot = localCharacter:WaitForChild("HumanoidRootPart")
+local playerPos = localRoot.Position
+local players = Players:GetPlayers()
+local validPlayers = {}
+
+for _, player in ipairs(players) do
+if player ~= localPlayer and player.Character and not IsInWhitelist(player.Name) then
+local otherRoot = player.Character:FindFirstChild("HumanoidRootPart")
+if otherRoot and (otherRoot.Position - playerPos).Magnitude <= TornadoSettings.MaxDistance then
+table.insert(validPlayers, player)
+setNoclip(player.Character, true)
+end
+end
+end
+
+local angleOffset = 360 / #validPlayers
+for i, player in ipairs(validPlayers) do
+local otherRoot = player.Character:FindFirstChild("HumanoidRootPart")
+if not flungPlayers[player] then
+setNetworkOwner(otherRoot)
+local distanceToPlayer = (otherRoot.Position - playerPos).Magnitude
+local separationAngle = (i - 1) * angleOffset
+local separationRadius = TornadoSettings.PlayerSeparation * (i - 1)
+local baseX = playerPos.X + (separationRadius * math.cos(math.rad(separationAngle)))
+local baseZ = playerPos.Z + (separationRadius * math.sin(math.rad(separationAngle)))
+local approach = distanceToPlayer > TornadoSettings.MinDistance
+
+for j = 1, TornadoSettings.Layers do
+local angle = (tick() * TornadoSettings.RotationSpeed) + separationAngle + (j * (360 / TornadoSettings.Layers))
+local radius = (j * TornadoSettings.RadiusMultiplier) + separationRadius
+local posX, posZ
+
+if approach then
+local direction = (playerPos - otherRoot.Position).Unit
+local offset = direction * TornadoSettings.MinDistance
+posX = playerPos.X - offset.X
+posZ = playerPos.Z - offset.Z
+else
+posX = baseX + (radius * math.cos(math.rad(angle)))
+posZ = baseZ + (radius * math.sin(math.rad(angle)))
+end
+
+local posY = playerPos.Y + ((j * TornadoSettings.Height) / TornadoSettings.Layers)
+local targetPosition = Vector3.new(posX, posY, posZ)
+local rotation = CFrame.Angles(0, math.rad(angle), 0)
+createBodyMovers(otherRoot, targetPosition, rotation, approach)
+end
+end
+end
+end
+
+local function clearBodyMovers()
+if (tick() - lastGrabTime) >= TornadoSettings.GrabInterval then
+for part, _ in pairs(TornadoParts) do
+if not flungPlayers[Players:GetPlayerFromCharacter(part.Parent)] then
+flingPlayer(part)
+flungPlayers[Players:GetPlayerFromCharacter(part.Parent)] = true
+end
+end
+TornadoParts = {}
+lastGrabTime = tick()
+end
+end
+
+RunService.Heartbeat:Connect(function()
+if TornadoSettings.Enabled then
+tornadoEffect()
+else
+clearBodyMovers()
+flungPlayers = {}
+end
+end)
+
+-- Tornado UI
+GrabWhitelist:AddToggle({
+Name = "Enable Tornado",
+Default = false,
+Callback = function(value)
+TornadoSettings.Enabled = value
+if not value then
+clearBodyMovers()
+flungPlayers = {}
+end
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Tornado Layers",
+Min = 1,
+Max = 10,
+Default = 3,
+Callback = function(value)
+TornadoSettings.Layers = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Tornado Speed",
+Min = 1,
+Max = 100,
+Default = 50,
+Callback = function(value)
+TornadoSettings.Speed = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Tornado Height",
+Min = 1,
+Max = 50,
+Default = 10,
+Callback = function(value)
+TornadoSettings.Height = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Max Distance",
+Min = 10,
+Max = 100,
+Default = 40,
+Callback = function(value)
+TornadoSettings.MaxDistance = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Rotation Speed",
+Min = 1,
+Max = 100,
+Default = 50,
+Callback = function(value)
+TornadoSettings.RotationSpeed = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Min Distance to Player",
+Min = 1,
+Max = 20,
+Default = 5,
+Callback = function(value)
+TornadoSettings.MinDistance = value
+end
+})
+
+GrabWhitelist:AddSlider({
+Name = "Approach Speed",
+Min = 1,
+Max = 50,
+Default = 20,
+Callback = function(value)
+TornadoSettings.ApproachSpeed = value
+end
+})
+
+-- Combined Control Tab
+local CombinedToggle = Window:MakeTab({
+Name = "Combined Control",
+Icon = "rbxassetid://18719810809",
+PremiumOnly = false
+})
+
+-- Blobman Control
+local blobmanCoroutine
+local isBlobmanControlEnabled = false
+local grabInterval = 3
+local blobalter = 1
+local blobman = nil
+local detectingPlayers = false
+local attachedPlayers = {}
+local activePlayerImages = {}
+
+local function isDescendantOf(child, parent)
+while child ~= nil do
+if child == parent then
+return true
+end
+child = child.Parent
+end
+return false
+end
+
+local function blobGrabPlayer(player, blobman)
+if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+local humanoidRootPart = player.Character.HumanoidRootPart
+local detectorName = (blobalter == 1) and "LeftDetector" or "RightDetector"
+local detector = blobman:FindFirstChild(detectorName)
+
+if detector then
+local line = Instance.new("Part")
+line.Size = Vector3.new(0.1, 0.1, (blobman.PrimaryPart.Position - humanoidRootPart.Position).Magnitude)
+line.CFrame = CFrame.new(blobman.PrimaryPart.Position, humanoidRootPart.Position) * CFrame.new(0, 0, -line.Size.Z / 2)
+line.Anchored = true
+line.CanCollide = false
+line.Transparency = 0.5
+line.BrickColor = BrickColor.new("Neon cyan")
+line.Material = Enum.Material.Neon
+line.Parent = Workspace
+
+local hitbox = Instance.new("Part")
+hitbox.Size = Vector3.new(1, 2, 1)
+hitbox.CFrame = humanoidRootPart.CFrame
+hitbox.Anchored = true
+hitbox.CanCollide = false
+hitbox.Transparency = 0.8
+hitbox.BrickColor = BrickColor.new("Neon green")
+hitbox.Material = Enum.Material.Neon
+hitbox.Parent = Workspace
+
+local args = {
+[1] = detector,
+[2] = humanoidRootPart,
+[3] = detector:FindFirstChild(detectorName .. "Weld")
+}
+
+blobman:WaitForChild("BlobmanSeatAndOwnerScript"):WaitForChild("CreatureGrab"):FireServer(unpack(args))
+blobalter = 3 - blobalter
+
+wait(0.1)
+line:Destroy()
+hitbox:Destroy()
+else
+warn("Detector not found:", detectorName)
+end
+end
+end
+
+local function movePlayerUpward(player)
+if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+local humanoidRootPart = player.Character.HumanoidRootPart
+local upwardForce = 50
+local bodyVelocity = Instance.new("BodyVelocity")
+bodyVelocity.MaxForce = Vector3.new(0, math.huge, 0)
+bodyVelocity.Velocity = Vector3.new(0, upwardForce, 0)
+bodyVelocity.Parent = humanoidRootPart
+Debris:AddItem(bodyVelocity, 0.3)
+end
+end
+
+-- Combined Control UI
+CombinedToggle:AddToggle({
+Name = "Blobman Kick All (Normal Mode)",
+Default = false,
+Callback = function(enabled)
+if enabled then
+-- Find mounted blobman
+blobman = nil
+for _, obj in pairs(Workspace:GetDescendants()) do
+if obj.Name == "CreatureBlobman" and obj:FindFirstChild("VehicleSeat") and obj.VehicleSeat:FindFirstChild("SeatWeld") then
+if isDescendantOf(obj.VehicleSeat.SeatWeld.Part1, localPlayer.Character) then
+blobman = obj
+break
+end
+end
+end
+
+if not blobman then
+warn("No mounted Blobman found")
+return
+end
+
+-- Start control coroutine
+blobmanCoroutine = coroutine.create(function()
+while true do
+for _, player in pairs(Players:GetPlayers()) do
+if player ~= localPlayer then
+blobGrabPlayer(player, blobman)
+end
+end
+task.wait(0.1)
+end
+end)
+coroutine.resume(blobmanCoroutine)
+else
+if blobmanCoroutine then
+coroutine.close(blobmanCoroutine)
+blobmanCoroutine = nil
+end
+blobman = nil
+end
+end
+})
+
+-- Aura Effects Tab
+local AuraTab = Window:MakeTab({
+Name = "Aura Effects",
+Icon = "rbxassetid://4483345998",
+PremiumOnly = false
+})
+
+local AuraConfig = {
+isMoving = false,
+selectedEffect = "None",
+orbitSpeed = 5,
+updateInterval = 0.1,
+ringRadius = 10,
+ballRadius = 8,
+ringHeight = 5,
+ballHeight = 7,
+ringCount = 3,
+ringSpacing = 2,
+distance = 10,
+ringDistance = 10,
+ballDistance = 8
+}
+
+local activeToys = {}
+local effectConnection
+local lastUpdateTime = 0
+
+local function createBodyMovers(part, position, rotation)
+local bodyPosition = part:FindFirstChild("BodyPosition") or Instance.new("BodyPosition", part)
+bodyPosition.P = 2000
+bodyPosition.D = 400
+bodyPosition.MaxForce = Vector3.new(5000000, 5000000, 5000000)
+bodyPosition.Position = position
+
+local bodyGyro = part:FindFirstChild("BodyGyro") or Instance.new("BodyGyro", part)
+bodyGyro.P = 2000
+bodyGyro.D = 400
+bodyGyro.MaxTorque = Vector3.new(5000000, 5000000, 5000000)
+bodyGyro.CFrame = rotation
+part.Anchored = false
+end
+
+local function disableCollision(model)
+for _, part in pairs(model:GetDescendants()) do
+if part:IsA("BasePart") then
+part.CanCollide = false
+end
+end
+end
+
+local function enableCollision(model)
+for _, part in pairs(model:GetDescendants()) do
+if part:IsA("BasePart") then
+part.CanCollide = true
+end
+end
+end
+
+local function addToysToAura()
+for _, toy in ipairs(Workspace:GetDescendants()) do
+if toy:IsA("Model") and toy:FindFirstChild("SoundPart") and not activeToys[toy] then
+activeToys[toy] = {
+angleOffset = math.random(0, 360),
+ringIndex = math.random(1, AuraConfig.ringCount)
+}
+disableCollision(toy)
+end
+end
+end
+
+local function clearEffects()
+for toy, _ in pairs(activeToys) do
+local soundPart = toy:FindFirstChild("SoundPart")
+if soundPart then
+for _, child in ipairs(soundPart:GetChildren()) do
+if child:IsA("BodyMover") or child:IsA("BodyGyro") then
+child:Destroy()
+end
+end
+enableCollision(toy)
+end
+end
+activeToys = {}
+end
+
+local function ringEffect()
+local character = localPlayer.Character
+if not character then return end
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+if not rootPart then return end
+
+for toy, data in pairs(activeToys) do
+local soundPart = toy:FindFirstChild("SoundPart")
+if soundPart then
+data.angleOffset = (data.angleOffset + (AuraConfig.orbitSpeed * AuraConfig.updateInterval)) % 360
+local angle = math.rad(data.angleOffset)
+local posX = rootPart.Position.X + (AuraConfig.ringDistance * math.cos(angle))
+local posZ = rootPart.Position.Z + (AuraConfig.ringDistance * math.sin(angle))
+local posY = rootPart.Position.Y + AuraConfig.ringHeight
+createBodyMovers(soundPart, Vector3.new(posX, posY, posZ), CFrame.Angles(0, angle, 0))
+end
+end
+end
+
+local function ballEffect()
+local character = localPlayer.Character
+if not character then return end
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+if not rootPart then return end
+
+for toy, data in pairs(activeToys) do
+local soundPart = toy:FindFirstChild("SoundPart")
+if soundPart then
+data.angleOffset = (data.angleOffset + (AuraConfig.orbitSpeed * AuraConfig.updateInterval)) % 360
+local angle = math.rad(data.angleOffset)
+local posX = rootPart.Position.X + (AuraConfig.ballDistance * math.sin(angle))
+local posZ = rootPart.Position.Z + (AuraConfig.ballDistance * math.cos(angle))
+local posY = rootPart.Position.Y + AuraConfig.ballHeight
+createBodyMovers(soundPart, Vector3.new(posX, posY, posZ), CFrame.Angles(0, angle, 0))
+end
+end
+end
+
+local function saturnEffect()
+local character = localPlayer.Character
+if not character then return end
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+if not rootPart then return end
+
+for toy, data in pairs(activeToys) do
+local soundPart = toy:FindFirstChild("SoundPart")
+if soundPart then
+data.angleOffset = (data.angleOffset + (AuraConfig.orbitSpeed * AuraConfig.updateInterval)) % 360
+local angle = math.rad(data.angleOffset)
+
+if (data.ringIndex % 2) == 1 then
+local posX = rootPart.Position.X + (AuraConfig.ringDistance * math.cos(angle))
+local posZ = rootPart.Position.Z + (AuraConfig.ringDistance * math.sin(angle))
+local posY = rootPart.Position.Y + AuraConfig.ringHeight
+createBodyMovers(soundPart, Vector3.new(posX, posY, posZ), CFrame.Angles(0, angle, 0))
+else
+local posX = rootPart.Position.X + (AuraConfig.ballDistance * math.sin(angle))
+local posZ = rootPart.Position.Z + (AuraConfig.ballDistance * math.cos(angle))
+local posY = rootPart.Position.Y + AuraConfig.ballHeight
+createBodyMovers(soundPart, Vector3.new(posX, posY, posZ), CFrame.Angles(0, angle, 0))
+end
+end
+end
+end
+
+local function combinedEffect()
+if AuraConfig.selectedEffect == "Rings" then
+ringEffect()
+elseif AuraConfig.selectedEffect == "Ball" then
+ballEffect()
+elseif AuraConfig.selectedEffect == "Saturn" then
+saturnEffect()
+end
+end
+
+local function toggleEffect()
+if AuraConfig.isMoving then
+addToysToAura()
+if effectConnection then
+effectConnection:Disconnect()
+end
+effectConnection = RunService.Heartbeat:Connect(function()
+if (os.clock() - lastUpdateTime) >= AuraConfig.updateInterval then
+lastUpdateTime = os.clock()
+combinedEffect()
+end
+end)
+else
+if effectConnection then
+effectConnection:Disconnect()
+end
+clearEffects()
+end
+end
+
+-- Aura Effects UI
+AuraTab:AddDropdown({
+Name = "Select Aura Effect",
+Default = "None",
+Options = {"None", "Rings", "Ball", "Saturn"},
+Callback = function(value)
+AuraConfig.selectedEffect = value
+end
+})
+
+AuraTab:AddToggle({
+Name = "Enable/Disable Aura",
+Default = false,
+Callback = function(state)
+AuraConfig.isMoving = state
+toggleEffect()
+end
+})
+
+AuraTab:AddSlider({
+Name = "Ring Height",
+Min = 1,
+Max = 20,
+Default = 5,
+Callback = function(value)
+AuraConfig.ringHeight = value
+end
+})
+
+AuraTab:AddSlider({
+Name = "Ball Height",
+Min = 1,
+Max = 20,
+Default = 7,
+Callback = function(value)
+AuraConfig.ballHeight = value
+end
+})
+
+AuraTab:AddSlider({
+Name = "Ring Distance",
+Min = 5,
+Max = 30,
+Default = 10,
+Callback = function(value)
+AuraConfig.ringDistance = value
+end
+})
+
+AuraTab:AddSlider({
+Name = "Ball Distance",
+Min = 5,
+Max = 30,
+Default = 8,
+Callback = function(value)
+AuraConfig.ballDistance = value
+end
+})
+
+AuraTab:AddSlider({
+Name = "Effect Speed",
+Min = 10,
+Max = 1000,
+Default = 10,
+Rounding = 0,
+Callback = function(value)
+AuraConfig.orbitSpeed = value
+end
+})
+
+OrionLib:Init()
